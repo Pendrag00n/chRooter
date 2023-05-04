@@ -4,8 +4,9 @@
 
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
+chrootgroup="sshonly"
 chrootshell="/bin/bash"
-binaries=(ls cat echo rm mkdir mount umount du tail passwd cat nano chmod chown cp mv crontab mail rsync tar)
+binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mail mkdir mount mv nano nc passwd rm rsync sleep tail tar umount)
 
 ###
 
@@ -24,14 +25,28 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # Check if binaries are installed
-for binary in $binaries; do
-    if ! which $binary >/dev/null; then
+for binary in "${binaries[@]}"; do
+    if ! which "$binary" >/dev/null; then
         echo ""
         echo -e "${RED}    ERROR: $binary is not installed. Fix the issue and re-run the script.${NC}"
         echo ""
         exit 1
     fi
 done
+
+# Check if $chrootuser exists, exit if it does
+if id -u $chrootuser >/dev/null 2>&1; then
+    echo ""
+    echo -e "${RED}    ERROR: User $chrootuser already exists. Fix the issue and re-run the script.${NC}"
+    echo ""
+    exit 1
+fi
+
+# Create $chrootuser
+useradd $chrootuser
+groupadd $chrootuser
+#usermod -a -G $chrootuser $chrootuser
+echo "Creating user $chrootuser..."
 
 # If $chrootpath does not exist, create it
 if ! [ -d $chrootpath ]; then
@@ -52,29 +67,15 @@ echo "Creating /dev/urandom..."
 mknod -m 666 $chrootpath/dev/tty c 5 0
 echo "Creating /dev/tty..."
 echo ""
+
+# Set permissions and ownership for $chrootpath
 chown root:root $chrootpath
 chmod 0755 $chrootpath
 echo "Setting permissions and ownership for $chrootpath..."
 
-# if $chrootuser does not exist, create it
-if ! id -u $chrootuser >/dev/null 2>&1; then
-    useradd -M -N -s $chrootshell $chrootuser
-    echo "Creating user $chrootuser..."
-else
-    echo -e "${YEL}User $chrootuser already exists! \n Do you want to go on? (y/n)${NC}"
-    read -r answer
-    if [ "$answer" = "${answer#[Yy]}" ]; then
-        echo "Exiting..."
-        exit 0
-    fi
-    echo "Continuing..."
-fi
-
-# copy /etc/{passwd,group} to $chrootpath/etc
-cp -vf /etc/{passwd,group} $chrootpath/etc/ > /dev/null
+# Copy /etc/{passwd,group} to $chrootpath/etc
+cp -f /etc/{passwd,group} $chrootpath/etc/
 echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
-cp -v /bin/bash $chrootpath/bin/ > /dev/null
-echo "Copying /bin/bash to $chrootpath/bin..."
 
 # if $chrootpath/home/$chrootuser does not exist, create it
 [ -d $chrootpath/home/$chrootuser ] || mkdir -p $chrootpath/home/$chrootuser
@@ -85,14 +86,20 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 echo "Copying binaries to $chrootpath/bin..."
 echo ""
 for binary in $binaries; do
-    cp -v /bin/"$binary" $chrootpath/bin/  > /dev/null
+    cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
-    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp -v '{}' $chrootpath/lib64/ > /dev/null
+    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp '{}' $chrootpath/lib64/ >/dev/null
 done
 
 # Set $chrootuser's $PATH variable to include $chrootpath/bin # FIX !!!
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
 
+echo -e "${YEL}Do you want to set a new password for user $chrootuser? (y/n)${NC}"
+read -r answer
+if [ "$answer" = "${answer#[Yy]}" ]; then
+    passwd $chrootuser
+fi
+echo ""
 echo ""
 echo -e "${BLU}  Done! ${NC}"
 echo ""
@@ -103,5 +110,6 @@ echo "   Match User $chrootuser"
 echo "   ChrootDirectory $chrootpath"
 echo ""
 echo "2. Restart sshd:"
+echo "   systemctl restart sshd.service"
 echo ""
 exit 0
