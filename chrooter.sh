@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # Check if script is being run as root
 if [ "$EUID" -ne 0 ]; then
     echo ""
-    echo "${RED}    ERROR: Please run as root.${NC}"
+    echo -e "${RED}    ERROR: Please run as root.${NC}"
     echo ""
     exit 1
 fi
@@ -61,8 +61,7 @@ if ! id -u $chrootuser >/dev/null 2>&1; then
     useradd -M -N -s $chrootshell $chrootuser
     echo "Creating user $chrootuser..."
 else
-    echo "${YEL}User $chrootuser already exists!"
-    echo "Do you want to go on? (y/n)${NC}"
+    echo -e "${YEL}User $chrootuser already exists! \n Do you want to go on? (y/n)${NC}"
     read -r answer
     if [ "$answer" != "${answer#[Yy]}" ]; then
         echo "Exiting..."
@@ -96,7 +95,7 @@ echo "export PATH=$PATH:/bin" >>/home/$chrootuser/.bashrc
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
 
 echo ""
-echo "${BLU}  Done! ${NC}"
+echo -e "${BLU}  Done! ${NC}"
 echo ""
 echo "To configure the user to be able to access via SSH do the following:"
 echo ""
