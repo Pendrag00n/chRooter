@@ -85,7 +85,7 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 # add main commands along with their libs to $chrootpath/bin
 echo "Copying binaries to $chrootpath/bin..."
 echo ""
-for binary in $binaries; do
+for binary in ${binaries[@]}; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
     ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp '{}' $chrootpath/lib64/ >/dev/null
