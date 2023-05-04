@@ -5,7 +5,7 @@
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
 chrootshell="/bin/bash"
-binaries="(ls cat echo rm mkdir mount umount du tail passwd cat nano chmod chown cp mv crontab mail rsync tar)"
+binaries=(ls cat echo rm mkdir mount umount du tail passwd cat nano chmod chown cp mv crontab mail rsync tar)
 
 ###
 
@@ -63,17 +63,17 @@ if ! id -u $chrootuser >/dev/null 2>&1; then
 else
     echo -e "${YEL}User $chrootuser already exists! \n Do you want to go on? (y/n)${NC}"
     read -r answer
-    if [ "$answer" != "${answer#[Yy]}" ]; then
+    if [ "$answer" = "${answer#[Yy]}" ]; then
         echo "Exiting..."
         exit 0
     fi
+    echo "Continuing..."
 fi
-echo "Continuing..."
 
 # copy /etc/{passwd,group} to $chrootpath/etc
-cp -vf /etc/{passwd,group} $chrootpath/etc/
+cp -vf /etc/{passwd,group} $chrootpath/etc/ > /dev/null
 echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
-cp -v /bin/bash /home/test/bin/
+cp -v /bin/bash $chrootpath/bin/ > /dev/null
 echo "Copying /bin/bash to $chrootpath/bin..."
 
 # if $chrootpath/home/$chrootuser does not exist, create it
@@ -85,13 +85,12 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 echo "Copying binaries to $chrootpath/bin..."
 echo ""
 for binary in $binaries; do
-    cp -v /bin/"$binary" $chrootpath/bin/
+    cp -v /bin/"$binary" $chrootpath/bin/  > /dev/null
     echo "Copying /bin/$binary to $chrootpath/bin..."
-    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp -v '{}' $chrootpath/lib64/
+    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp -v '{}' $chrootpath/lib64/ > /dev/null
 done
 
-# Set $chrootuser's $PATH variable to include $chrootpath/bin
-echo "export PATH=$PATH:/bin" >>/home/$chrootuser/.bashrc
+# Set $chrootuser's $PATH variable to include $chrootpath/bin # FIX !!!
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
 
 echo ""
