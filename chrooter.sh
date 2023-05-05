@@ -91,7 +91,7 @@ done
 # Set $chrootuser's $PATH variable to include $chrootpath/bin
 echo ""
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
-echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
+echo "export PATH=/bin/" > $chrootpath/home/$chrootuser/.bash_profile
 
 # Ask the user if they want to set $chrootuser's password
 echo ""
