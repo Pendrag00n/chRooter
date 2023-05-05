@@ -4,7 +4,7 @@
 
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
-binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mail mkdir mount mv nano nc passwd rm rsync sleep tail tar touch tree umount)
+binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sleep tail tar touch umount)
 
 ###
 
