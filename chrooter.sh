@@ -81,8 +81,8 @@ chown -R $chrootuser:$chrootuser $chrootpath/home/$chrootuser
 chmod -R 0700 $chrootpath/home/$chrootuser
 
 # Add main commands along with their libs to $chrootpath/bin
-echo "Copying binaries to $chrootpath/bin..."
 echo ""
+echo "Copying binaries to $chrootpath/bin..."
 for binary in "${binaries[@]}"; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
@@ -90,13 +90,15 @@ for binary in "${binaries[@]}"; do
 done
 
 # Set $chrootuser's $PATH variable to include $chrootpath/bin
+echo ""
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
 echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
 
 # Ask the user if they want to set $chrootuser's password
+echo ""
 echo -e "${YEL}Do you want to set a new password for user $chrootuser? (y/n)${NC}"
 read -r answer
-if [ "$answer" = "${answer#[Yy]}" ]; then
+if [ "$answer" -ne "${answer#[Yy]}" ]; then
     passwd $chrootuser
 fi
 
@@ -116,17 +118,16 @@ fi
 
 # Ask the user if they want to restart the SSH daemon
 if [ "$sshconfigured" = true ]; then
+    echo ""
     echo -e "${YEL}Do you want to restart the SSH daemon? (y/n)${NC}"
     read -r answer
-    if [ "$answer" = "${answer#[Yy]}" ]; then
+    if [ "$answer" -ne "${answer#[Yy]}" ]; then
         systemctl restart sshd.service
     fi
 fi
 
 echo ""
-echo ""
 echo -e "${BLU}  Done! ${NC}"
-echo ""
 if [ "$sshconfigured" = false ]; then
     echo ""
     echo "To configure the user to be able to access via SSH do the following:"
