@@ -4,7 +4,7 @@
 
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
-binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sleep tail tar touch umount)
+binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sh sleep tail tar touch umount)
 
 ###
 
@@ -41,8 +41,7 @@ if id -u $chrootuser >/dev/null 2>&1; then
 fi
 
 # Create $chrootuser
-useradd $chrootuser -c "Chrooted user"
-groupadd $chrootuser
+useradd $chrootuser -c "Chrooted user" -s /bin/bash
 #usermod -a -G $chrootuser $chrootuser
 echo "Creating user $chrootuser..."
 
@@ -83,15 +82,14 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 # Add main commands along with their libs to $chrootpath/bin
 echo ""
 echo "Copying binaries to $chrootpath/bin..."
+# ADD LAST LINE OF LDD !!!
 for binary in "${binaries[@]}"; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
     ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | while read -r dep; do
         if [[ $dep == /lib* ]]; then
-            # Copy the dependency to the lib directory
             cp "$dep" "$chrootpath/lib/"
         elif [[ $dep == /lib64* ]]; then
-            # Copy the dependency to the lib64 directory
             cp "$dep" "$chrootpath/lib64/"
         fi
     done
@@ -114,6 +112,7 @@ fi
 if [ -f "/etc/ssh/sshd_config" ]; then
     echo "Match User $chrootuser" >>/etc/ssh/sshd_config
     echo "    ChrootDirectory $chrootpath" >>/etc/ssh/sshd_config
+    echo ""
     sshconfigured=true
 else
     echo "${YEL}The SSH config file couldn't be found${NC}"
