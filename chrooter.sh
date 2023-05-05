@@ -98,7 +98,7 @@ echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
 echo ""
 echo -e "${YEL}Do you want to set a new password for user $chrootuser? (y/n)${NC}"
 read -r answer
-if [ "$answer" -ne "${answer#[Yy]}" ]; then
+if ! [ "$answer" = "${answer#[Yy]}" ]; then
     passwd $chrootuser
 fi
 
@@ -121,8 +121,8 @@ if [ "$sshconfigured" = true ]; then
     echo ""
     echo -e "${YEL}Do you want to restart the SSH daemon? (y/n)${NC}"
     read -r answer
-    if [ "$answer" -ne "${answer#[Yy]}" ]; then
-        systemctl restart sshd.service
+    if ! [ "$answer" = "${answer#[Yy]}" ]; then
+        systemctl restart ssh.service
     fi
 fi
 
@@ -137,7 +137,7 @@ if [ "$sshconfigured" = false ]; then
     echo "   ChrootDirectory $chrootpath"
     echo ""
     echo "2. Restart sshd:"
-    echo "   systemctl restart sshd.service"
+    echo "   systemctl restart ssh.service"
     echo ""
 else
     echo ""
