@@ -4,7 +4,7 @@
 
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
-binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sleep tail tar touch umount)
+binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sh sleep tail tar touch umount)
 
 ###
 
@@ -81,7 +81,7 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 
 # Add main commands along with their libs to $chrootpath/bin
 echo ""
-echo "Copying binaries to $chrootpath/bin..."
+echo "Copying binaries (alongside required libs) to $chrootpath/bin..."
 for binary in "${binaries[@]}"; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
