@@ -4,7 +4,7 @@
 
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
-binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sh sleep tail tar touch umount)
+binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sleep tail tar touch umount)
 
 ###
 
@@ -42,6 +42,7 @@ fi
 
 # Create $chrootuser
 useradd $chrootuser -c "Chrooted user"
+groupadd $chrootuser
 #usermod -a -G $chrootuser $chrootuser
 echo "Creating user $chrootuser..."
 
@@ -52,7 +53,7 @@ if ! [ -d $chrootpath ]; then
 fi
 
 # Create /dev/null, /dev/zero, /dev/random, /dev/urandom and /dev/tty
-mkdir -p $chrootpath/{dev,etc,lib64,bin,home}
+mkdir -p $chrootpath/{dev,etc,lib64,lib,bin,home}
 mknod -m 666 $chrootpath/dev/null c 1 3
 echo "Creating /dev/null..."
 mknod -m 666 $chrootpath/dev/zero c 1 5
@@ -81,17 +82,25 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 
 # Add main commands along with their libs to $chrootpath/bin
 echo ""
-echo "Copying binaries (alongside required libs) to $chrootpath/bin..."
+echo "Copying binaries to $chrootpath/bin..."
 for binary in "${binaries[@]}"; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
-    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp '{}' $chrootpath/lib64/ >/dev/null
+    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | while read -r dep; do
+        if [[ $dep == /lib* ]]; then
+            # Copy the dependency to the lib directory
+            cp "$dep" "$chrootpath/lib/"
+        elif [[ $dep == /lib64* ]]; then
+            # Copy the dependency to the lib64 directory
+            cp "$dep" "$chrootpath/lib64/"
+        fi
+    done
 done
 
 # Set $chrootuser's $PATH variable to include $chrootpath/bin
 echo ""
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
-echo "export PATH=/bin/" > $chrootpath/home/$chrootuser/.bash_profile
+echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
 
 # Ask the user if they want to set $chrootuser's password
 echo ""
