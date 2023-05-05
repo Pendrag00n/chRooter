@@ -4,8 +4,6 @@
 
 chrootpath="/jail/chroot1"
 chrootuser="chrootuser"
-chrootgroup="sshonly"
-chrootshell="/bin/bash"
 binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mail mkdir mount mv nano nc passwd rm rsync sleep tail tar touch tree umount)
 
 ###
@@ -24,7 +22,7 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Check if binaries are installed
+# Check if the declared binaries are installed
 for binary in "${binaries[@]}"; do
     if ! which "$binary" >/dev/null; then
         echo ""
@@ -43,7 +41,7 @@ if id -u $chrootuser >/dev/null 2>&1; then
 fi
 
 # Create $chrootuser
-useradd $chrootuser
+useradd $chrootuser -c "Chrooted user"
 groupadd $chrootuser
 #usermod -a -G $chrootuser $chrootuser
 echo "Creating user $chrootuser..."
@@ -77,39 +75,73 @@ echo "Setting permissions and ownership for $chrootpath..."
 cp -f /etc/{passwd,group} $chrootpath/etc/
 echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
 
-# if $chrootpath/home/$chrootuser does not exist, create it
+# If $chrootpath/home/$chrootuser does not exist, create it
 [ -d $chrootpath/home/$chrootuser ] || mkdir -p $chrootpath/home/$chrootuser
 chown -R $chrootuser:$chrootuser $chrootpath/home/$chrootuser
 chmod -R 0700 $chrootpath/home/$chrootuser
 
-# add main commands along with their libs to $chrootpath/bin
+# Add main commands along with their libs to $chrootpath/bin
 echo "Copying binaries to $chrootpath/bin..."
 echo ""
-for binary in ${binaries[@]}; do
+for binary in "${binaries[@]}"; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
     ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | xargs -I '{}' cp '{}' $chrootpath/lib64/ >/dev/null
 done
 
-# Set $chrootuser's $PATH variable to include $chrootpath/bin # FIX !!!
+# Set $chrootuser's $PATH variable to include $chrootpath/bin
 echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
+echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
 
+# Ask the user if they want to set $chrootuser's password
 echo -e "${YEL}Do you want to set a new password for user $chrootuser? (y/n)${NC}"
 read -r answer
 if [ "$answer" = "${answer#[Yy]}" ]; then
     passwd $chrootuser
 fi
+
+# Configure SSH to jail $chrootuser
+if [ -f "/etc/ssh/sshd_config" ]; then
+    echo "Match User $chrootuser" >>/etc/ssh/sshd_config
+    echo "    ChrootDirectory $chrootpath" >>/etc/ssh/sshd_config
+    sshconfigured=true
+elif [ -f "/etc/ssh/ssh_config" ]; then
+    echo "Match User $chrootuser" >>/etc/ssh/ssh_config
+    echo "    ChrootDirectory $chrootpath" >>/etc/ssh/ssh_config
+    sshconfigured=true
+elif [ ! -f "/etc/sshd/sshd_config" ] || [ ! -f "/etc/ssh/ssh_config" ]; then
+    echo "${YEL}The ssh config file couldn't be found${NC}"
+    sshconfigured=false
+fi
+
+# Ask the user if they want to restart the SSH daemon
+if [ "$sshconfigured" = true ]; then
+    echo -e "${YEL}Do you want to restart the SSH daemon? (y/n)${NC}"
+    read -r answer
+    if [ "$answer" = "${answer#[Yy]}" ]; then
+        systemctl restart sshd.service
+    fi
+fi
+
 echo ""
 echo ""
 echo -e "${BLU}  Done! ${NC}"
 echo ""
-echo "To configure the user to be able to access via SSH do the following:"
-echo ""
-echo "1. Add the following lines to /etc/ssh/sshd_config:"
-echo "   Match User $chrootuser"
-echo "   ChrootDirectory $chrootpath"
-echo ""
-echo "2. Restart sshd:"
-echo "   systemctl restart sshd.service"
-echo ""
+if [ "$sshconfigured" = false ]; then
+    echo ""
+    echo "To configure the user to be able to access via SSH do the following:"
+    echo ""
+    echo "1. Add the following lines to /etc/ssh/sshd_config:"
+    echo "   Match User $chrootuser"
+    echo "   ChrootDirectory $chrootpath"
+    echo ""
+    echo "2. Restart sshd:"
+    echo "   systemctl restart sshd.service"
+    echo ""
+else
+    echo ""
+    echo "The user $chrootuser can now be accessed via SSH by running:"
+    echo "  ssh $chrootuser@$(hostname -I)"
+    echo ""
+fi
 exit 0
