@@ -107,25 +107,31 @@ if [ -f "/etc/ssh/sshd_config" ]; then
     echo "Match User $chrootuser" >>/etc/ssh/sshd_config
     echo "    ChrootDirectory $chrootpath" >>/etc/ssh/sshd_config
     sshconfigured=true
-elif [ -f "/etc/ssh/ssh_config" ]; then
-    echo "Match User $chrootuser" >>/etc/ssh/ssh_config
-    echo "    ChrootDirectory $chrootpath" >>/etc/ssh/ssh_config
-    sshconfigured=true
-elif [ ! -f "/etc/sshd/sshd_config" ] || [ ! -f "/etc/ssh/ssh_config" ]; then
-    echo "${YEL}The ssh config file couldn't be found${NC}"
+else
+    echo "${YEL}The SSH config file couldn't be found${NC}"
     sshconfigured=false
 fi
 
+# Determine between ssh or sshd
+if systemctl is-active --quiet sshd.service; then
+    sshservice_name="sshd.service"
+elif systemctl is-active --quiet ssh.service; then
+    sshservice_name="ssh.service"
+else
+    sshservice_name="unknown"
+fi
+
 # Ask the user if they want to restart the SSH daemon
-if [ "$sshconfigured" = true ]; then
+if [ "$sshconfigured" = true ] && ! [ "$sshservice_name" = "unknown" ]; then
     echo ""
     echo -e "${YEL}Do you want to restart the SSH daemon? (y/n)${NC}"
     read -r answer
     if ! [ "$answer" = "${answer#[Yy]}" ]; then
-        systemctl restart ssh.service
+        systemctl restart $sshservice_name
     fi
 fi
 
+# Done!
 echo ""
 echo -e "${BLU}  Done! ${NC}"
 if [ "$sshconfigured" = false ]; then
