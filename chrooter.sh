@@ -42,7 +42,6 @@ fi
 
 # Create $chrootuser
 useradd $chrootuser -c "Chrooted user"
-groupadd $chrootuser
 #usermod -a -G $chrootuser $chrootuser
 echo "Creating user $chrootuser..."
 
