@@ -32,6 +32,14 @@ for binary in "${binaries[@]}"; do
         exit 1
     fi
 done
+for binary in "${corebinaries[@]}"; do
+    if ! which "$binary" >/dev/null; then
+        echo ""
+        echo -e "${RED}    ERROR: $binary is (somehow) not installed. Fix the issue and re-run the script.${NC}"
+        echo ""
+        exit 1
+    fi
+done
 
 # Check if $chrootuser exists, exit if it does
 if id -u $chrootuser >/dev/null 2>&1; then
