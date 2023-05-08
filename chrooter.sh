@@ -40,16 +40,23 @@ if id -u $chrootuser >/dev/null 2>&1; then
     exit 1
 fi
 
-# Create $chrootuser
-useradd $chrootuser -c "Chrooted user" -s /bin/bash
-#usermod -a -G $chrootuser $chrootuser
-echo "Creating user $chrootuser..."
+# Check if $chrootpath is a valid path
+if ! [[ $chrootpath =~ ^/ ]]; then
+    echo ""
+    echo -e "${RED}    ERROR: $chrootpath is not a valid path. Fix the issue and re-run the script.${NC}"
+    echo ""
+    exit 1
+fi
 
 # If $chrootpath does not exist, create it
 if ! [ -d $chrootpath ]; then
     mkdir -p $chrootpath
     echo "Creating $chrootpath..."
 fi
+
+# Create $chrootuser
+useradd $chrootuser -c "Chrooted user" -s /bin/bash
+echo "Creating user $chrootuser..."
 
 # Create /dev/null, /dev/zero, /dev/random, /dev/urandom and /dev/tty
 mkdir -p $chrootpath/{dev,etc,lib64,lib,bin,home}
@@ -82,7 +89,9 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 # Add main commands along with their libs to $chrootpath/bin
 echo ""
 echo "Copying binaries to $chrootpath/bin..."
-# ADD LAST LINE OF LDD !!!
+mainlib=$(ldd /bin/bash | grep -v "=>" | grep "lib" | cut -d " " -f 1 | tr -d '[:blank:]')
+libtype=$(echo "$mainlib" | cut -d "/" -f 2)
+cp "$mainlib" $chrootpath/"$libtype"
 for binary in "${binaries[@]}"; do
     cp /bin/"$binary" $chrootpath/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
