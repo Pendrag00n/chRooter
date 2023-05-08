@@ -7,7 +7,7 @@
 To use `chRooter`, simply download the script to your Linux system:  
 `$ wget https://raw.githubusercontent.com/Pendrag00n/chRooter/main/chrooter.sh`
 
-Make the script executable:
+Make the script executable:  
 `chmod +x chRooter.sh`
 
 ## Usage
