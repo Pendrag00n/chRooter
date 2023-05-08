@@ -1,10 +1,11 @@
 #!/bin/bash
 
-###
+### Modify the following variables to suit your needs ###
 
-chrootpath="/jail/chroot1"
-chrootuser="chrootuser"
-binaries=(awk bash cat chmod chown cp crontab cut du echo find grep head ls mkdir mount mv nano nc passwd rm rsync sh sleep tail tar touch umount)
+chrootpath="/jail/chroot1"                                                                                               # Path to the chrooted environment
+chrootuser="chrootuser"                                                                                                  # Username for the chrooted environment
+corebinaries=(bash cat cp echo ls mkdir mv rm rmdir touch)                                                               # Basic binaries for the shell to work
+binaries=(awk chmod chown crontab cut du find grep head mount nano nc passwd rsync sh sleep tail tar touch umount xterm) # Other binaries that might be useful
 
 ###
 
@@ -77,9 +78,9 @@ chown root:root $chrootpath
 chmod 0755 $chrootpath
 echo "Setting permissions and ownership for $chrootpath..."
 
-# Copy /etc/{passwd,group} to $chrootpath/etc
-cp -f /etc/{passwd,group} $chrootpath/etc/
-echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
+# Copy /etc/{passwd,group,bashrc} to $chrootpath/etc
+cp -f /etc/{passwd,group,bashrc} $chrootpath/etc/
+echo "Copying /etc/passwd, /etc/group and /etc/bashrc to $chrootpath/etc..."
 
 # If $chrootpath/home/$chrootuser does not exist, create it
 [ -d $chrootpath/home/$chrootuser ] || mkdir -p $chrootpath/home/$chrootuser
@@ -88,7 +89,24 @@ chmod -R 0700 $chrootpath/home/$chrootuser
 
 # Add main commands along with their libs to $chrootpath/bin
 echo ""
-echo "Copying binaries to $chrootpath/bin..."
+echo "Copying core binaries to $chrootpath/bin..."
+mainlib=$(ldd /bin/bash | grep -v "=>" | grep "lib" | cut -d " " -f 1 | tr -d '[:blank:]')
+libtype=$(echo "$mainlib" | cut -d "/" -f 2)
+cp "$mainlib" $chrootpath/"$libtype"
+for binary in "${corebinaries[@]}"; do
+    cp /bin/"$binary" $chrootpath/bin/
+    echo "Copying /bin/$binary to $chrootpath/bin..."
+    ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | while read -r dep; do
+        if [[ $dep == /lib* ]]; then
+            cp "$dep" "$chrootpath/lib/"
+        elif [[ $dep == /lib64* ]]; then
+            cp "$dep" "$chrootpath/lib64/"
+        fi
+    done
+done
+
+echo ""
+echo "Copying the rest of binaries to $chrootpath/bin..."
 mainlib=$(ldd /bin/bash | grep -v "=>" | grep "lib" | cut -d " " -f 1 | tr -d '[:blank:]')
 libtype=$(echo "$mainlib" | cut -d "/" -f 2)
 cp "$mainlib" $chrootpath/"$libtype"
@@ -106,8 +124,9 @@ done
 
 # Set $chrootuser's $PATH variable to include $chrootpath/bin
 echo ""
-echo "Setting $chrootuser's PATH variable to include $chrootpath/bin..."
-echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
+echo "Setting $chrootuser's BASH envivorement..."
+echo ". /etc/bashrc" >$chrootpath/home/$chrootuser/.bashrc
+echo "export PATH=/bin/" >>$chrootpath/home/$chrootuser/.bashrc
 
 # Ask the user if they want to set $chrootuser's password
 echo ""
