@@ -4,7 +4,7 @@
 
 ## Installation
 
-To use `chRooter`, simply download the script to your Linux system:
+To use `chRooter`, simply download the script to your Linux system:  
 `$ wget https://github.com/yourusername/chRooter/blob/main/chRooter.sh`
 
 Make the script executable:
