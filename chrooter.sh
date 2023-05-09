@@ -215,7 +215,8 @@ if [ "$sshconfigured" = false ]; then
 else
     echo ""
     echo "The user $chrootuser can now be accessed via SSH by running:"
-    echo -e "   ${BLU}ssh $chrootuser@$(hostname -I)-p $sshport ${NC}"
+    echo ""
+    echo -e "      $ ${BLU}ssh $chrootuser@$(hostname -I)-p $sshport ${NC}"
     echo ""
 fi
 exit 0
