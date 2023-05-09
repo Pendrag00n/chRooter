@@ -168,7 +168,7 @@ fi
 
 # Configure SSH to jail $chrootuser
 if [ -f "/etc/ssh/sshd_config" ]; then
-    sshport=$(grep </etc/ssh/sshd_config.bckp "^Port" | cut -d " " -f 2)
+    sshport=$(grep </etc/ssh/sshd_config "^Port" | cut -d " " -f 2)
     echo "Match User $chrootuser" >>/etc/ssh/sshd_config
     echo "    ChrootDirectory $chrootpath" >>/etc/ssh/sshd_config
     echo ""
@@ -217,7 +217,7 @@ if [ "$sshconfigured" = false ]; then
 else
     echo ""
     echo "The user $chrootuser can now be accessed via SSH by running:"
-    echo  -e "   ${BLU}ssh $chrootuser@$(hostname -I) -p $sshport ${NC}"
+    echo  -e "   ${BLU}ssh $chrootuser@$(hostname -I)-p $sshport ${NC}"
     echo ""
 fi
 exit 0
