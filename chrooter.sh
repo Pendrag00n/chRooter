@@ -10,9 +10,9 @@ binaries=(awk chmod chown crontab cut du find grep head mount nano nc passwd rsy
 ###
 
 # Colors!
-RED='\033[0;31m'
+RED='\033[1;31m'
 YEL='\033[1;33m'
-BLU='\033[0;34m'
+BLU='\033[1;34m'
 NC='\033[0m' # No Color
 
 # Check if script is being run as root
@@ -27,7 +27,7 @@ fi
 for binary in "${binaries[@]}"; do
     if ! which "$binary" >/dev/null; then
         echo ""
-        echo -e "${RED}    ERROR: $binary is not installed. Fix the issue and re-run the script.${NC}"
+        echo -e "${RED}    ERROR: $binary is not installed or is mistyped. Fix the issue and re-run the script.${NC}"
         echo ""
         exit 1
     fi
@@ -35,7 +35,7 @@ done
 for binary in "${corebinaries[@]}"; do
     if ! which "$binary" >/dev/null; then
         echo ""
-        echo -e "${RED}    ERROR: $binary is (somehow) not installed. Fix the issue and re-run the script.${NC}"
+        echo -e "${RED}    ERROR: $binary is not installed or is mistyped. Fix the issue and re-run the script.${NC}"
         echo ""
         exit 1
     fi
@@ -75,41 +75,41 @@ useradd $chrootuser -c "Chrooted user" -s /bin/bash
 echo "Creating user $chrootuser..."
 
 # Create /dev/null, /dev/zero, /dev/random, /dev/urandom and /dev/tty
-mkdir -p $chrootpath/{dev,etc,lib64,lib,bin,home}
-mknod -m 666 $chrootpath/dev/null c 1 3
+mkdir -p "$chrootpath"/{dev,etc,lib64,lib,bin,home}
+mknod -m 666 "$chrootpath"/dev/null c 1 3
 echo "Creating /dev/null..."
-mknod -m 666 $chrootpath/dev/zero c 1 5
+mknod -m 666 "$chrootpath"/dev/zero c 1 5
 echo "Creating /dev/zero..."
-mknod -m 666 $chrootpath/dev/random c 1 8
+mknod -m 666 "$chrootpath"/dev/random c 1 8
 echo "Creating /dev/random..."
-mknod -m 666 $chrootpath/dev/urandom c 1 9
+mknod -m 666 "$chrootpath"/dev/urandom c 1 9
 echo "Creating /dev/urandom..."
-mknod -m 666 $chrootpath/dev/tty c 5 0
+mknod -m 666 "$chrootpath"/dev/tty c 5 0
 echo "Creating /dev/tty..."
 echo ""
 
 # Set permissions and ownership for $chrootpath
-chown root:root $chrootpath
-chmod 0755 $chrootpath
+chown root:root "$chrootpath"
+chmod 0755 "$chrootpath"
 echo "Setting permissions and ownership for $chrootpath..."
 
 # Copy /etc/{passwd,group,bashrc} to $chrootpath/etc
-cp -f /etc/{passwd,group,bashrc} $chrootpath/etc/
-echo "Copying /etc/passwd, /etc/group and /etc/bashrc to $chrootpath/etc..."
+cp -f /etc/{passwd,group} "$chrootpath"/etc/
+echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
 
 # If $chrootpath/home/$chrootuser does not exist, create it
-[ -d $chrootpath/home/$chrootuser ] || mkdir -p $chrootpath/home/$chrootuser
-chown -R $chrootuser:$chrootuser $chrootpath/home/$chrootuser
-chmod -R 0700 $chrootpath/home/$chrootuser
+[ -d "$chrootpath"/home/$chrootuser ] || mkdir -p "$chrootpath"/home/$chrootuser
+chown -R $chrootuser:$chrootuser "$chrootpath"/home/$chrootuser
+chmod -R 0700 "$chrootpath"/home/$chrootuser
 
 # Add main commands along with their libs to $chrootpath/bin
 echo ""
 echo "Copying core binaries to $chrootpath/bin..."
 mainlib=$(ldd /bin/bash | grep -v "=>" | grep "lib" | cut -d " " -f 1 | tr -d '[:blank:]')
 libtype=$(echo "$mainlib" | cut -d "/" -f 2)
-cp "$mainlib" $chrootpath/"$libtype"
+cp "$mainlib" "$chrootpath"/"$libtype"
 for binary in "${corebinaries[@]}"; do
-    cp /bin/"$binary" $chrootpath/bin/
+    cp /bin/"$binary" "$chrootpath"/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
     ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | while read -r dep; do
         if [[ $dep == /lib* ]]; then
@@ -124,9 +124,9 @@ echo ""
 echo "Copying the rest of binaries to $chrootpath/bin..."
 mainlib=$(ldd /bin/bash | grep -v "=>" | grep "lib" | cut -d " " -f 1 | tr -d '[:blank:]')
 libtype=$(echo "$mainlib" | cut -d "/" -f 2)
-cp "$mainlib" $chrootpath/"$libtype"
+cp "$mainlib" "$chrootpath"/"$libtype"
 for binary in "${binaries[@]}"; do
-    cp /bin/"$binary" $chrootpath/bin/
+    cp /bin/"$binary" "$chrootpath"/bin/
     echo "Copying /bin/$binary to $chrootpath/bin..."
     ldd /bin/"$binary" | grep "=> /" | awk '{print $3}' | while read -r dep; do
         if [[ $dep == /lib* ]]; then
@@ -138,21 +138,21 @@ for binary in "${binaries[@]}"; do
 done
 
 # Ensure correct permissions
-chmod -R 644 $chrootpath/lib
-chown root:root $chrootpath/lib
-chmod -R 644 $chrootpath/lib64
-chown root:root $chrootpath/lib64
-chmod -R 755 $chrootpath/bin
-chown root:root $chrootpath/bin
-chmod -R 666 $chrootpath/dev
-chown root:root $chrootpath/dev
+chmod -R 644 "$chrootpath"/lib
+chown root:root "$chrootpath"/lib
+chmod -R 644 "$chrootpath"/lib64
+chown root:root "$chrootpath"/lib64
+chmod -R 755 "$chrootpath"/bin
+chown root:root "$chrootpath"/bin
+chmod -R 666 "$chrootpath"/dev
+chown root:root "$chrootpath"/dev
 
 # Set $chrootuser's $PATH variable to include $chrootpath/bin
 echo ""
 echo "Setting $chrootuser's BASH envivorement..."
-echo "export PATH=/bin/" >$chrootpath/home/$chrootuser/.bashrc
-echo "export PS1="\[\033[01;32m\]\u@\h \[\033[01;34m\]\w\[\033[00m\]$ "" >>$chrootpath/home/$chrootuser/.bashrc
-echo "export LS_COLORS="rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;37;41:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.m4a=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.oga=01;36:*.opus=01;36:*.spx=01;36:*.xspf=01;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:" >>$chrootpath/home/$chrootuser/.bashrc
+echo "export PATH=/bin/" >"$chrootpath"/home/$chrootuser/.bashrc
+echo "export PS1='\[\033[01;32m\]\u@\h \[\033[01;34m\]\w\[\033[00m\]$ '" >>"$chrootpath"/home/$chrootuser/.bashrc
+echo "export LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=01;37;41:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=01;36:*.au=01;36:*.flac=01;36:*.m4a=01;36:*.mid=01;36:*.midi=01;36:*.mka=01;36:*.mp3=01;36:*.mpc=01;36:*.ogg=01;36:*.ra=01;36:*.wav=01;36:*.oga=01;36:*.opus=01;36:*.spx=01;36:*.xspf=01;36:*~=00;90:*#=00;90:*.bak=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.swp=00;90:*.tmp=00;90:*.dpkg-dist=00;90:*.dpkg-old=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:'" >>"$chrootpath"/home/$chrootuser/.bashrc
 
 # Ask the user if they want to set $chrootuser's password
 echo ""
