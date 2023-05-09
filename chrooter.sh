@@ -5,14 +5,14 @@
 chrootpath="/jail/chroot1"                                                                                               # Path to the chrooted environment
 chrootuser="chrootuser"                                                                                                  # Username for the chrooted environment
 corebinaries=(bash cat cp echo ls mkdir mv rm rmdir touch)                                                               # Basic binaries for the shell to work
-binaries=(awk chmod chown crontab cut du find grep head mount nano nc passwd rsync sh sleep tail tar touch umount xterm) # Other binaries that might be useful
+binaries=(awk chmod chown crontab cut du find grep head mount nano nc passwd rsync sh sleep tail tar touch umount) # Other binaries that might be useful
 
 ###
 
 # Colors!
-RED='\033[1;31m'
-YEL='\033[1;33m'
-BLU='\033[1;34m'
+RED='\033[1;91m'
+YEL='\033[1;93m'
+BLU='\033[1;94m'
 NC='\033[0m' # No Color
 
 # Check if script is being run as root
@@ -64,7 +64,10 @@ fi
 
 # If $chrootpath does not exist, create it
 if [ -d $chrootpath ]; then
-    echo "${RED}The directory $chrootpath already exists, please delete it to prevent stuff from breaking${NC}"
+    echo ""
+    echo -e "${RED}The directory $chrootpath already exists, please delete it to prevent stuff from breaking${NC}"
+    echo ""
+    exit 1
 else
     mkdir -p $chrootpath
     echo "Creating $chrootpath..."
@@ -169,7 +172,7 @@ if [ -f "/etc/ssh/sshd_config" ]; then
     echo ""
     sshconfigured=true
 else
-    echo "${YEL}The SSH config file couldn't be found${NC}"
+    echo -e "${YEL}The SSH config file couldn't be found${NC}"
     sshconfigured=false
 fi
 
@@ -209,7 +212,7 @@ if [ "$sshconfigured" = false ]; then
 else
     echo ""
     echo "The user $chrootuser can now be accessed via SSH by running:"
-    echo "  ssh $chrootuser@$(hostname -I)"
+    echo  -e "-->   ${BLU}ssh $chrootuser@$(hostname -I)${NC}   <--"
     echo ""
 fi
 exit 0
