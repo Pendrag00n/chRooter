@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 # Check if script is being run as root
 if [ "$EUID" -ne 0 ]; then
     echo ""
-    echo -e "${RED}    ERROR: Please run as root.${NC}"
+    echo -e "${RED}    ERROR: Please run this script as root.${NC}"
     echo ""
     exit 1
 fi
@@ -65,7 +65,7 @@ fi
 # If $chrootpath does not exist, create it
 if [ -d $chrootpath ]; then
     echo ""
-    echo -e "${RED}The directory $chrootpath already exists, please delete it to prevent stuff from breaking${NC}"
+    echo -e "${RED}    ERROR: The directory $chrootpath already exists, please delete it or use another one to prevent stuff from breaking.${NC}"
     echo ""
     exit 1
 else
@@ -159,7 +159,8 @@ echo "export LS_COLORS='rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:
 
 # Ask the user if they want to set $chrootuser's password
 echo ""
-echo -e "${YEL}Do you want to set a new password for user $chrootuser? (y/n)${NC}"
+echo -e "
+Do you want to set a new password for user $chrootuser? (y/n)${NC}"
 read -r answer
 if ! [ "$answer" = "${answer#[Yy]}" ]; then
     passwd $chrootuser
@@ -167,13 +168,17 @@ fi
 
 # Configure SSH to jail $chrootuser
 if [ -f "/etc/ssh/sshd_config" ]; then
+    sshport=$(grep </etc/ssh/sshd_config.bckp "^Port" | cut -d " " -f 2)
     echo "Match User $chrootuser" >>/etc/ssh/sshd_config
     echo "    ChrootDirectory $chrootpath" >>/etc/ssh/sshd_config
     echo ""
     sshconfigured=true
 else
-    echo -e "${YEL}The SSH config file couldn't be found${NC}"
+    echo -e "${YEL} WARN: The SSH config file couldn't be found! Skipping automatic SSH exception configuration${NC}"
     sshconfigured=false
+fi
+if [ -z "$sshport" ]; then
+    sshport=22
 fi
 
 # Determine between ssh or sshd
@@ -212,7 +217,7 @@ if [ "$sshconfigured" = false ]; then
 else
     echo ""
     echo "The user $chrootuser can now be accessed via SSH by running:"
-    echo  -e "-->   ${BLU}ssh $chrootuser@$(hostname -I)${NC}   <--"
+    echo  -e "   ${BLU}ssh $chrootuser@$(hostname -I) -p $sshport ${NC}"
     echo ""
 fi
 exit 0
