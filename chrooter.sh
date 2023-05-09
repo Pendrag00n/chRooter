@@ -140,7 +140,7 @@ for binary in "${binaries[@]}"; do
     done
 done
 
-# Set $chrootuser's $PATH variable to include $chrootpath/bin
+# Set $chrootuser's BASH envivorement
 echo ""
 echo "Setting $chrootuser's BASH envivorement..."
 echo 'PATH="/bin/"' >"$chrootpath"/home/$chrootuser/.bashrc
@@ -148,8 +148,13 @@ echo 'PS1="\[\033[01;32m\]\u@\h \[\033[01;34m\]\w\[\033[00m\]$ "' >>"$chrootpath
 echo "alias ls='ls --color{,=auto,=always}'" >>"$chrootpath"/home/$chrootuser/.bashrc
 echo "alias ls -la='ls -la --color{,=auto,=always}'" >>"$chrootpath"/home/$chrootuser/.bashrc
 echo "alias ll='ls -la --color{,=auto,=always}'" >>"$chrootpath"/home/$chrootuser/.bashrc
+echo " " >>"$chrootpath"/home/$chrootuser/.bashrc
 chown $chrootuser:$chrootuser "$chrootpath"/home/$chrootuser/.bashrc
 chmod 644 "$chrootpath"/home/$chrootuser/.bashrc
+
+echo 'source ~/.bashrc' >"$chrootpath"/home/$chrootuser/.bash_profile
+chown $chrootuser:$chrootuser "$chrootpath"/home/$chrootuser/.bash_profile
+chmod 644 "$chrootpath"/home/$chrootuser/.bash_profile
 
 # Ask the user if they want to set $chrootuser's password
 echo ""
