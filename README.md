@@ -8,7 +8,10 @@ To use chRooter, simply download the script to your Linux system:
 `$ wget https://raw.githubusercontent.com/Pendrag00n/chRooter/main/chrooter.sh`
 
 Make the script executable:  
-`$ chmod +x chRooter.sh`
+`$ sudo chmod +x chRooter.sh`
+
+Modify the variables to fit your needs and then, run it:  
+`$ sudo ./chRooter.sh`
 
 ## Usage
 
@@ -17,4 +20,4 @@ To run `chRooter`, simply modify the following variables and then run the script
 - `$chrootpath`: The path to the new chroot environment.
 - `$chrootuser`: The username for the chrooted user.
 - `$binaries`: A list of binaries to include in the chroot environment.
-- `$corebinaries`: These are basic binaries for the command line to work properly.
+- `$corebinaries`: These are core binaries that give the envivorement it's basic functionalities.
