@@ -22,4 +22,4 @@ To run `chRooter`, simply modify the following variables and then run the script
 - `$binaries`: A list of binaries to include in the chroot environment.
 - `$corebinaries`: These are core binaries that give the envivorement it's basic functionalities.
 
-Before using this script for anything serious, I recommend giving [Escaping From Jails](https://book.hacktricks.xyz/linux-hardening/privilege-escalation/escaping-from-limited-bash) a quick read and watching [Balázs Bucsay's Conference](https://youtube.com/D1eipd9HbIY) on the matter
+Before using this script for anything serious, I recommend giving [Escaping From Jails](https://book.hacktricks.xyz/linux-hardening/privilege-escalation/escaping-from-limited-bash) a quick read and watching [Balázs Bucsay's Conference](https://youtu.be/D1eipd9HbIY) on the matter
