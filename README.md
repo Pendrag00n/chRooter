@@ -8,10 +8,10 @@ To use chRooter, simply download the script to your Linux system:
 `$ wget https://raw.githubusercontent.com/Pendrag00n/chRooter/main/chrooter.sh`
 
 Make the script executable:  
-`$ sudo chmod +x chRooter.sh`
+`$ sudo chmod +x chrooter.sh`
 
 Modify the variables to fit your needs and then, run it:  
-`$ sudo ./chRooter.sh`
+`$ sudo ./chrooter.sh`
 
 ## Usage
 
