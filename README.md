@@ -1,6 +1,6 @@
 # chRooter
 
-`chRooter` is a simple script that sets up a chrooted user on a Linux system. It allows you to easily specify the path to the chroot environment, the username for the chrooted user, and the binaries to include in the chroot.
+`chRooter` is a simple script that manually sets up a chrooted user on a Linux system. It allows you to easily specify the path to the chroot environment, the username for the chrooted user, and the binaries to include in the chroot.
 
 ## Installation
 
