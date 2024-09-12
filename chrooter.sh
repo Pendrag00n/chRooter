@@ -2,10 +2,11 @@
 
 ### Modify the following variables to suit your needs ###
 
-chrootpath="/jail/chroot1"                                                                                               # Path to the chrooted environment
-chrootuser="chrootuser"                                                                                                  # Username for the chrooted environment
-corebinaries=(bash cat cp echo ls mkdir mv rm rmdir touch)                                                               # Basic binaries for the shell to work
+chrootpath="/jail/chroot1" # Path to the chrooted environment
+chrootuser="chrootuser1" # Username for the chrooted environment
+corebinaries=(bash cat cp echo ls mkdir mv rm rmdir touch) # Basic binaries for the shell to work
 binaries=(awk chmod chown clear crontab cut du find grep head mount nano nc passwd rsync sh sleep tail tar touch umount) # Other binaries that might be useful
+users=(root daemon bin sys pdgn) # Users in /etc/{passwd,shadow} to be included in the jail
 
 ###
 
@@ -63,13 +64,13 @@ if [ ${chrootpath: -1} = "/" ]; then
 fi
 
 # If $chrootpath does not exist, create it
-if [ -d $chrootpath ]; then
+if [ -d "$chrootpath" ]; then
     echo ""
     echo -e "${RED}    ERROR: The directory $chrootpath already exists, please delete it or use another one to prevent stuff from breaking.${NC}"
     echo ""
     exit 1
 else
-    mkdir -p $chrootpath
+    mkdir -p "$chrootpath"
     echo "Creating $chrootpath..."
 fi
 
@@ -95,10 +96,6 @@ echo ""
 chown root:root "$chrootpath"
 chmod 0755 "$chrootpath"
 echo "Setting permissions and ownership for $chrootpath..."
-
-# Copy /etc/{passwd,group,bashrc} to $chrootpath/etc
-cp -f /etc/{passwd,group} "$chrootpath"/etc/
-echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
 
 # If $chrootpath/home/$chrootuser does not exist, create it
 [ -d "$chrootpath"/home/$chrootuser ] || mkdir -p "$chrootpath"/home/$chrootuser
@@ -164,6 +161,17 @@ if ! [ "$answer" = "${answer#[Yy]}" ]; then
     passwd $chrootuser
 fi
 
+# Copy modified /etc/{passwd,group} to $chrootpath/etc
+#cp -f /etc/{passwd,group} "$chrootpath"/etc/
+#echo "Copying /etc/passwd and /etc/group to $chrootpath/etc..."
+
+for user in "${users[@]}"; do
+    grep ^"$user": /etc/passwd >> "$chrootpath"/etc/passwd
+    grep ^"$user": /etc/shadow >> "$chrootpath"/etc/shadow
+done
+grep ^"$chrootuser": /etc/passwd >> "$chrootpath"/etc/passwd
+grep ^"$chrootuser": /etc/shadow >> "$chrootpath"/etc/shadow
+
 # Configure SSH to jail $chrootuser
 if [ -f "/etc/ssh/sshd_config" ]; then
     sshport=$(grep </etc/ssh/sshd_config "^Port" | cut -d " " -f 2)
@@ -216,7 +224,7 @@ else
     echo ""
     echo "The user $chrootuser can now be accessed via SSH by running:"
     echo ""
-    echo -e "      $ ${BLU}ssh $chrootuser@$(hostname -I)-p $sshport ${NC}"
+    echo -e "      $ ${BLU}ssh $chrootuser@$(hostname -I | cut -d " " -f 1)-p $sshport ${NC}"
     echo ""
 fi
 exit 0
