@@ -4,9 +4,10 @@
 
 chrootpath="/jail/chroot1" # Path to the chrooted environment
 chrootuser="chrootuser1" # Username for the chrooted environment
-corebinaries=(bash cat cp echo ls mkdir mv rm rmdir touch) # Basic binaries for the shell to work
-binaries=(awk chmod chown clear crontab cut du find grep head mount nano nc passwd rsync sh sleep tail tar touch umount) # Other binaries that might be useful
-users=(root daemon bin sys pdgn) # Users in /etc/{passwd,shadow} to be included in the jail
+corebinaries=(cat cp echo ls mkdir mv rm rmdir touch) # Basic binaries for the shell to work
+binaries=(awk bash chmod chown clear crontab cut du find grep head mount nano nc passwd rsync sh sleep tail tar touch umount) # Other binaries which might not be needed
+users=(root daemon bin sys) # Users in /etc/{passwd,shadow} to be included in the jail
+ulimit=1024 # Maximum number of processes the user can run. This prevents fork bombs.
 
 ###
 
@@ -74,9 +75,31 @@ else
     echo "Creating $chrootpath..."
 fi
 
+# Enable pam_limits.so
+if ! grep -q "session required pam_limits.so" /etc/pam.d/common-session; then
+    echo "session required pam_limits.so" >>/etc/pam.d/common-session
+    echo "Enabled pam_limits.so in /etc/pam.d/common-session"
+fi
+if ! grep -q "session required pam_limits.so" /etc/pam.d/common-session-noninteractive; then
+    echo "session required pam_limits.so" >>/etc/pam.d/common-session-noninteractive
+    echo "Enabled pam_limits.so in /etc/pam.d/common-session-noninteractive"
+fi
+
 # Create $chrootuser
 useradd $chrootuser -c "Chrooted user" -s /bin/bash
 echo "Creating user $chrootuser..."
+
+# Set $chrootuser's ulimit
+if ! grep -q "$chrootuser soft nproc $ulimit" /etc/security/limits.conf; then
+    echo "$chrootuser soft nproc $ulimit" >>/etc/security/limits.conf
+else
+    echo "soft ulimit for $chrootuser was already set!"
+fi
+if ! grep -q "$chrootuser hard nproc $ulimit" /etc/security/limits.conf; then
+    echo "$chrootuser hard nproc $ulimit" >>/etc/security/limits.conf
+else
+    echo "hard ulimit for $chrootuser was already set!"
+fi
 
 # Create /dev/null, /dev/zero, /dev/random, /dev/urandom and /dev/tty
 mkdir -p "$chrootpath"/{dev,etc,lib64,lib,bin,home}
@@ -224,7 +247,7 @@ else
     echo ""
     echo "The user $chrootuser can now be accessed via SSH by running:"
     echo ""
-    echo -e "      $ ${BLU}ssh $chrootuser@$(hostname -I | cut -d " " -f 1)-p $sshport ${NC}"
+    echo -e "      $ ${BLU}ssh $chrootuser@$(hostname -I | cut -d " " -f 1) -p $sshport ${NC}"
     echo ""
 fi
 exit 0
