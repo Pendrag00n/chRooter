@@ -32,5 +32,7 @@ To run `chrooter.sh`, simply modify the following variables and then run the scr
 
 Simply run `$ sudo deluser <username>` and remove the `$chrootpath`
 
+##
+
 Before using this script for anything serious, I recommend giving [Escaping From Jails](https://book.hacktricks.xyz/linux-hardening/privilege-escalation/escaping-from-limited-bash) a quick read and watching [Balázs Bucsay's Conference](https://youtu.be/D1eipd9HbIY) on the matter.
 ### Bear in mind that a jailed user can still fill up all the partition space if you haven't set up disk quotas
