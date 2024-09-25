@@ -160,9 +160,9 @@ for binary in "${binaries[@]}"; do
     done
 done
 
-# Set $chrootuser's BASH envivorement
+# Set $chrootuser's BASH environment
 echo ""
-echo "Setting $chrootuser's BASH envivorement..."
+echo "Setting $chrootuser's BASH environment..."
 echo 'PATH="/bin/"' >"$chrootpath"/home/$chrootuser/.bashrc
 echo 'PS1="\[\033[01;32m\]\u@\h \[\033[01;34m\]\w\[\033[00m\]$ "' >>"$chrootpath"/home/$chrootuser/.bashrc
 echo "alias ls='ls --color{,=auto,=always}'" >>"$chrootpath"/home/$chrootuser/.bashrc
