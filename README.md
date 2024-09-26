@@ -1,8 +1,8 @@
 # chRooter
 
-`chrooter.sh` is a simple script that offers a workaround to what the `chroot` command does. It easily sets up a chrooted user and custom environment on a Linux system, allowing you to specify the path to the chroot environment, the username for the chrooted user, the users to include in the passwd and shadow files, and the binaries to include in the chroot.
+`chrooter.sh` is a simple script that offers a workaround to what the `chroot` command does. It easily sets up a jailed user and custom environment on a Linux system, allowing you to specify the path to the jailed environment, the username for the chrooted user, the users to include in the passwd and shadow files, and the binaries to include in the jail.
 
-The chrooted user does not interact with the system through a virtualization layer, avoiding the performance overhead typically associated with virtual machines. The user communicates directly with the kernel using the same system calls as any other user, but their capabilities are restricted by the binaries included in the environment.
+The jailed user does not interact with the system through a virtualization layer, avoiding the performance overhead typically associated with virtual machines. The user communicates directly with the kernel using the same system calls as any other user, but their capabilities are restricted by the binaries included in the environment.
 
 It is crucial to understand that importing certain binaries into the chroot may pose a security risk.
 
